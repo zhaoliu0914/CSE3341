@@ -62,6 +62,16 @@ public class DeclarationInteger {
     }
 
     /**
+     * Using the recursive descent approach to walk over the parse tree.
+     * This function will execute its children and perform any action needed on the result of that execution.
+     *
+     * @param memory simulating memory (Stack and Heap) for local and global variables
+     */
+    public void execute(Memory memory) {
+        memory.allocate(Core.INTEGER, variable);
+    }
+
+    /**
      * produce "pretty" code with the appropriate indentation
      *
      * @param indent the number of spaces which need to be print

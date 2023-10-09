@@ -5,14 +5,13 @@ import java.util.Stack;
 /**
  * This is the class that represents parser tree.
  * Every method like "parse()", "semanticChecking()", and "print()" will invoke this class first.
- *
+ * <p>
  * There are 2 different types of "Procedure" operations available.
  * <procedure> ==> procedure ID is <decl-seq> begin <stmt-seq> end
  * <procedure> ==> procedure ID is begin <stmt-seq> end
  * <p>
  * This only difference is whether containing "<decl-seq>".
  * If it is containing "<decl-seq>", variable declarationSequence will be assigned value.
- *
  *
  * @author Zhao Liu
  */
@@ -107,8 +106,21 @@ public class Procedure {
     }
 
     /**
-     * produce "pretty" code with the appropriate indentation
+     * Using the recursive descent approach to walk over the parse tree.
+     * This function will execute its children and perform any action needed on the result of that execution.
      *
+     * @param memory simulating memory (Stack and Heap) for local and global variables
+     */
+    public void execute(Memory memory) {
+        if (declarationSequence != null) {
+            declarationSequence.execute(memory);
+        }
+
+        statementSequence.execute(memory);
+    }
+
+    /**
+     * produce "pretty" code with the appropriate indentation
      */
     public void print() {
         int indent = 0;

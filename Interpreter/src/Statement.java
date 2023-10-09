@@ -91,6 +91,33 @@ public class Statement {
         }
     }
 
+    /**
+     * Using the recursive descent approach to walk over the parse tree.
+     * This function will execute its children and perform any action needed on the result of that execution.
+     *
+     * @param memory simulating memory (Stack and Heap) for local and global variables
+     */
+    public void execute(Memory memory) {
+        if (assign != null) {
+            assign.execute(memory);
+
+        } else if (ifStmt != null) {
+            ifStmt.execute(memory);
+
+        } else if (loop != null) {
+            loop.execute(memory);
+
+        } else if (out != null) {
+            out.execute(memory);
+
+        } else if (in != null) {
+            in.execute(memory);
+
+        } else {
+            declaration.execute(memory);
+        }
+    }
+
 
     /**
      * produce "pretty" code with the appropriate indentation

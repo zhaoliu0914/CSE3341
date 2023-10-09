@@ -47,6 +47,23 @@ public class DeclarationSequence {
         }
     }
 
+    /**
+     * Using the recursive descent approach to walk over the parse tree.
+     * This function will execute its children and perform any action needed on the result of that execution.
+     *
+     * @param memory simulating memory (Stack and Heap) for local and global variables
+     */
+    public void execute(Memory memory) {
+        memory.setDeclSeqFinished(false);
+
+        declaration.execute(memory);
+        if (declarationSequence != null) {
+            declarationSequence.execute(memory);
+        }
+
+        memory.setDeclSeqFinished(true);
+    }
+
 
     /**
      * produce "pretty" code with the appropriate indentation

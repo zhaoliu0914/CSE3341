@@ -49,5 +49,9 @@ class Main {
 
         //System.out.println("===================Print Parser Tree===================");
         procedure.print();
+
+        //System.out.println("===================Execute the Program===================");
+        Memory memory = Memory.getInstance();
+        procedure.execute(memory);
     }
 }

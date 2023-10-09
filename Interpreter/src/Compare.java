@@ -55,6 +55,16 @@ public class Compare {
         rightExpression.semanticChecking(variableStack);
     }
 
+    /**
+     * Using the recursive descent approach to walk over the parse tree.
+     * This function will execute its children and perform any action needed on the result of that execution.
+     *
+     * @param memory simulating memory (Stack and Heap) for local and global variables
+     */
+    public void execute(Memory memory) {
+
+    }
+
 
     /**
      * produce "pretty" code with the appropriate indentation
