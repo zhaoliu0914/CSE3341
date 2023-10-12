@@ -66,11 +66,42 @@ public class Term {
     /**
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
+     * <p>
+     * There are three cases "<term> ::= <factor> | <factor> * <term> | <factor> / <term>"
+     * If variable "multiply" != null, it indicates "<term> ::= <factor> * <term>"
+     * If variable "divide" != null, it indicates "<term> ::= <factor> / <term>"
+     * Otherwise, it indicates "<term> ::= <factor>"
+     * <p>
+     * There is an additional semantic: when perform "<term> ::= <factor> / <term>", operation cannot divide by 0,
+     * which means "<term>" can not be 0
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
+     * @return the result of "<term>"
      */
-    public void execute(Memory memory) {
+    public int execute(Memory memory) {
+        int result = 0;
 
+        int factorValue = factor.execute(memory);
+        if (multiply != null) {
+            // Handle case for "<term> ::= <factor> * <term>"
+            int termValue = term.execute(memory);
+            result = factorValue * termValue;
+
+        } else if (divide != null) {
+            // Handle case for "<term> ::= <factor> / <term>"
+            int termValue = term.execute(memory);
+            if (termValue == 0) {
+                System.out.println("ERROR: can not divided by 0!!!");
+                System.exit(1);
+            }
+            result = factorValue / termValue;
+
+        } else {
+            // Handle case for "<term> ::= <factor>"
+            result = factorValue;
+        }
+
+        return result;
     }
 
     /**

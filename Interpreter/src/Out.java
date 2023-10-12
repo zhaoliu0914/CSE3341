@@ -67,10 +67,13 @@ public class Out {
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
      *
+     * The grammar is "<out> ::= out ( <expr> ) ;"
+     *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
     public void execute(Memory memory) {
-
+        int value = expression.execute(memory);
+        System.out.println(value);
     }
 
     /**

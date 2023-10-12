@@ -66,11 +66,34 @@ public class Expression {
     /**
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
+     * <p>
+     * There are three cases "<expr> ::= <term> | <term> + <expr> | <term> - <expr>"
+     * If variable "add" != null, it indicates "<expr> ::= <term> + <expr>"
+     * If variable "subtract" != null, it indicates "<expr> ::= <term> - <expr>"
+     * Otherwise, it indicates "<expr> ::= <term>"
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
+     * @return the result of "<expr>"
      */
-    public void execute(Memory memory) {
+    public int execute(Memory memory) {
+        int result = 0;
 
+        int termValue = term.execute(memory);
+        if (add != null) {
+            // Handle case for "<expr> ::= <term> + <expr>"
+            int expressionValue = expression.execute(memory);
+            result = termValue + expressionValue;
+
+        } else if (subtract != null) {
+            // Handle case for "<expr> ::= <term> - <expr>"
+            int expressionValue = expression.execute(memory);
+            result = termValue - expressionValue;
+
+        } else {
+            // Handle case for "<expr> ::= <term>"
+            result = termValue;
+        }
+        return result;
     }
 
     /**

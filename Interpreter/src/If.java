@@ -100,10 +100,39 @@ public class If {
     /**
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
+     * <p>
+     * There are two cases "<if> ::= if <cond> then <stmt-seq> end | if <cond> then <stmt-seq> else <stmt-seq> end"
+     * <p>
+     * If "elseKeyword" == null, it indicates "<if> ::= if <cond> then <stmt-seq> end"
+     * If "elseKeyword" != null, it indicates "<if> ::= if <cond> then <stmt-seq> else <stmt-seq> end"
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
     public void execute(Memory memory) {
+        int initialSize = memory.localSize();
+
+        boolean conditionValue = condition.execute(memory);
+        if (elseKeyword == null) {
+            // Handle case for "<if> ::= if <cond> then <stmt-seq> end"
+            // If the result of "condition" is true, run "<stmt-seq>"
+            if (conditionValue) {
+                statementSequence.execute(memory);
+            }
+
+        } else {
+            // Handle case for "<if> ::= if <cond> then <stmt-seq> else <stmt-seq> end"
+            // If the result of "condition" is true, run "<stmt-seq>"
+            // otherwise, run "else-<stmt-seq>"
+            if (conditionValue) {
+                statementSequence.execute(memory);
+            } else {
+                elseStatementSequence.execute(memory);
+            }
+        }
+
+        while (memory.localSize() > initialSize) {
+            memory.popLocalElement();
+        }
 
     }
 

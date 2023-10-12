@@ -80,7 +80,15 @@ public class In {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
     public void execute(Memory memory) {
+        Queue<Integer> inputDataQueue = memory.getInputDataQueue();
+        Integer value = inputDataQueue.poll();
 
+        if (value == null) {
+            System.out.println("ERROR: all values in the .data file have already been used!!!");
+            System.exit(1);
+        }
+
+        memory.update(variable, value);
     }
 
     /**

@@ -71,11 +71,29 @@ public class Loop {
     /**
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
+     * <p>
+     * There is only one case, "<loop> ::= while <cond> do <stmt-seq> end"
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
     public void execute(Memory memory) {
+        int initialSize = memory.localSize();
 
+        boolean conditionValue = condition.execute(memory);
+        // repeat run "<stmt-seq>", if the result of "<cond>" is true.
+        while (conditionValue) {
+            statementSequence.execute(memory);
+
+            while (memory.localSize() > initialSize) {
+                memory.popLocalElement();
+            }
+
+            conditionValue = condition.execute(memory);
+        }
+
+        while (memory.localSize() > initialSize) {
+            memory.popLocalElement();
+        }
     }
 
     /**

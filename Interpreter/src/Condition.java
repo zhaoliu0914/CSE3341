@@ -83,10 +83,53 @@ public class Condition {
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
      *
+     * The grammar is "<cond> ::= <cmpr> | not <cond> | <cmpr> or <cond> | <cmpr> and <cond>",
+     * so there are 4 cases need to handle.
+     *
+     * If "notKeyword" != null, it indicates "<cond> ::= not <cond>"
+     * If "orKeyword" != null, it indicates "<cond> ::= <cmpr> or <cond>"
+     * If "andKeyword" != null, it indicates "<cond> ::= <cmpr> and <cond>"
+     * otherwise, it is "<cond> ::= <cmpr>"
+     *
      * @param memory simulating memory (Stack and Heap) for local and global variables
+     * @return true or false, the result of condition
      */
-    public void execute(Memory memory) {
+    public boolean execute(Memory memory) {
+        boolean result = false;
 
+        if (notKeyword != null) {
+            // Handle case for "<cond> ::= not <cond>"
+            // Negate the value of "<cond>"
+            boolean conditionValue = condition.execute(memory);
+            if (!conditionValue) {
+                result = true;
+            }
+
+        } else if (orKeyword != null) {
+            // Handle case for "<cond> ::= <cmpr> or <cond>"
+            // either "<cmpr>" or "<cond>" is true, return true
+            boolean compareValue = compare.execute(memory);
+            boolean conditionValue = condition.execute(memory);
+            if (compareValue || conditionValue) {
+                result = true;
+            }
+
+        } else if (andKeyword != null) {
+            // Handle case for "<cond> ::= <cmpr> or <cond>"
+            // either "<cmpr>" or "<cond>" is true, return true
+            boolean compareValue = compare.execute(memory);
+            boolean conditionValue = condition.execute(memory);
+            if (compareValue && conditionValue) {
+                result = true;
+            }
+
+        } else {
+            // Handle case for "<cond> ::= <cmpr>"
+            // return the result of "<cmpr>"
+            result = compare.execute(memory);
+        }
+
+        return result;
     }
 
 

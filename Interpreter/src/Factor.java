@@ -119,11 +119,37 @@ public class Factor {
     /**
      * Using the recursive descent approach to walk over the parse tree.
      * This function will execute its children and perform any action needed on the result of that execution.
+     * <p>
+     * There are four cases "<factor> ::= id | id [ <expr> ] | const | ( <expr> )"
+     * If variable "constant" != null, it indicates "<factor> ::= const"
+     * If variable "leftParenthesis" != null, it indicates "<factor> ::= ( <expr> )"
+     * If variable "leftBracket" != null, it indicates "<factor> ::= id [ <expr> ]"
+     * Otherwise, it will be "<factor> ::= id"
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
+     * @return the result of "<factor>"
      */
-    public void execute(Memory memory) {
+    public int execute(Memory memory) {
+        int result = 0;
+        if (constant != null) {
+            // Handle case for "<factor> ::= const"
+            result = Integer.parseInt(constant);
 
+        } else if (leftParenthesis != null) {
+            // Handle case for "<factor> ::= ( <expr> )"
+            result = expression.execute(memory);
+
+        } else if (leftBracket != null) {
+            // Handle case for "<factor> ::= id [ <expr> ]"
+            int index = expression.execute(memory);
+            result = memory.findArrayByIndex(variable, index);
+
+        } else {
+            // Handle case for "<factor> ::= id"
+            result = memory.find(variable);
+        }
+
+        return result;
     }
 
     /**

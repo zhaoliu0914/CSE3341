@@ -131,6 +131,8 @@ public class Assign {
                 tokenQueue.poll();
                 rhsArrayKeyword = Core.ARRAY;
 
+                tokenQueue.poll();
+
                 rhsVariable = (String) tokenQueue.poll();
             } else {
                 // Case 3: "id := <expr> ;" will be only case.
@@ -209,7 +211,35 @@ public class Assign {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
     public void execute(Memory memory) {
+        if (isLHSArray) {
+            // Handle case for "id [ <expr> ] := <expr> ;"
+            // The result of lhsExpression is the "index" of array.
+            // The result of rhsExpression is the "value" of array.
+            int index = lhsExpression.execute(memory);
+            int value = rhsExpression.execute(memory);
+            memory.updateArray(lhsVariable, index, value);
 
+        } else if (isRHSNewInteger) {
+            // Handle case for "id := new integer [ <expr> ];"
+            // The result of rhsExpression is the "size" of array
+            int size = rhsExpression.execute(memory);
+            memory.initializeArray(lhsVariable, size);
+
+        } else if (isRHSNewArray) {
+            // Handle case for "id := array id ;"
+            // left-hand side will have the same reference value as the id on the right-hand side
+            // For example: both variables "point" to the same array
+            memory.copyBySharing(lhsVariable, rhsVariable);
+
+        } else {
+            // Handle case for " id := <expr> ;"
+            // When an array variable appears on the left-hand side of an "id := <expr>" type assignment without "[<expr>]",
+            // we treat it as a shorthand for the index 0.
+            // The result of rhsExpression is the "value"
+            int value = rhsExpression.execute(memory);
+            memory.update(lhsVariable, value);
+
+        }
     }
 
 
