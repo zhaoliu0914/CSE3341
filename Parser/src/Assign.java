@@ -131,6 +131,8 @@ public class Assign {
                 tokenQueue.poll();
                 rhsArrayKeyword = Core.ARRAY;
 
+                tokenQueue.poll();
+
                 rhsVariable = (String) tokenQueue.poll();
             } else {
                 // Case 3: "id := <expr> ;" will be only case.
