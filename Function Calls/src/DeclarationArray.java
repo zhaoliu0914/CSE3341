@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -19,7 +20,7 @@ public class DeclarationArray {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionCheckingMap) {
         if (tokenQueue.poll() != Core.ARRAY) {
             System.out.println("ERROR: missing keyword 'array' for declaration statement.");
             System.exit(1);
@@ -47,7 +48,7 @@ public class DeclarationArray {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionMap) {
         for (Variable temp : variableStack) {
             if (temp.getName().equals(variable)) {
                 System.out.println("ERROR: Array variable " + variable + " has been doubly-declared!!!");
@@ -67,7 +68,7 @@ public class DeclarationArray {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         memory.allocate(Core.ARRAY, variable);
     }
 

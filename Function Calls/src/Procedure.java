@@ -1,4 +1,5 @@
 import java.util.Locale;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -30,7 +31,7 @@ public class Procedure {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.poll() != Core.PROCEDURE) {
             System.out.println("ERROR: missing keyword 'procedure'!!!");
             System.exit(1);
@@ -53,7 +54,7 @@ public class Procedure {
             tokenQueue.poll();
         } else {
             declarationSequence = new DeclarationSequence();
-            declarationSequence.parse(tokenQueue);
+            declarationSequence.parse(tokenQueue, functionMap);
 
             if (tokenQueue.poll() != Core.BEGIN) {
                 System.out.println("ERROR: missing keyword 'begin'!!!");
@@ -72,7 +73,7 @@ public class Procedure {
         }
 
         statementSequence = new StatementSequence();
-        statementSequence.parse(tokenQueue);
+        statementSequence.parse(tokenQueue, functionMap);
 
         if (tokenQueue.poll() != Core.END) {
             System.out.println("ERROR: missing keyword 'end'!!!");
@@ -95,13 +96,13 @@ public class Procedure {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         if (declarationSequence != null) {
-            declarationSequence.semanticChecking(variableStack);
+            declarationSequence.semanticChecking(variableStack, functionCheckingMap);
         }
 
         if (statementSequence != null) {
-            statementSequence.semanticChecking(variableStack);
+            statementSequence.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -111,12 +112,12 @@ public class Procedure {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         if (declarationSequence != null) {
-            declarationSequence.execute(memory);
+            declarationSequence.execute(memory, functionMap);
         }
 
-        statementSequence.execute(memory);
+        statementSequence.execute(memory, functionMap);
     }
 
     /**

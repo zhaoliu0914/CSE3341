@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -24,9 +25,9 @@ public class Expression {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         term = new Term();
-        term.parse(tokenQueue);
+        term.parse(tokenQueue, functionMap);
 
         if (tokenQueue.peek() == Core.ADD) {
             // If the second token is symbol "+", then it is "<expr> ==> <term> + <expr>"
@@ -34,14 +35,14 @@ public class Expression {
             add = Core.ADD;
 
             expression = new Expression();
-            expression.parse(tokenQueue);
+            expression.parse(tokenQueue, functionMap);
         } else if (tokenQueue.peek() == Core.SUBTRACT) {
             // If the second token is symbol "-", then it is "<expr> ==> <term> - <expr>"
             tokenQueue.poll();
             subtract = Core.SUBTRACT;
 
             expression = new Expression();
-            expression.parse(tokenQueue);
+            expression.parse(tokenQueue, functionMap);
         }
 
     }
@@ -55,11 +56,11 @@ public class Expression {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
-        term.semanticChecking(variableStack);
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
+        term.semanticChecking(variableStack, functionCheckingMap);
 
         if (expression != null) {
-            expression.semanticChecking(variableStack);
+            expression.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -75,18 +76,18 @@ public class Expression {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      * @return the result of "<expr>"
      */
-    public int execute(Memory memory) {
+    public int execute(Memory memory, Map<String, Function> functionMap) {
         int result = 0;
 
-        int termValue = term.execute(memory);
+        int termValue = term.execute(memory, functionMap);
         if (add != null) {
             // Handle case for "<expr> ::= <term> + <expr>"
-            int expressionValue = expression.execute(memory);
+            int expressionValue = expression.execute(memory, functionMap);
             result = termValue + expressionValue;
 
         } else if (subtract != null) {
             // Handle case for "<expr> ::= <term> - <expr>"
-            int expressionValue = expression.execute(memory);
+            int expressionValue = expression.execute(memory, functionMap);
             result = termValue - expressionValue;
 
         } else {

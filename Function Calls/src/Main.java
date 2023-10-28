@@ -1,23 +1,21 @@
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Stack;
+import java.util.*;
 
 class Main {
     public static void main(String[] args) {
         // Initialize the scanner with the input file
         // !!!! for test
-        //java.util.Scanner input = new java.util.Scanner(System.in);
-        //System.out.print("enter a program file:");
-        //String fileName = input.nextLine();
-        //Scanner programScanner = new Scanner(fileName);
-        //java.util.Scanner input2 = new java.util.Scanner(System.in);
-        //System.out.print("enter a data file:");
-        //String dataFileName = input2.nextLine();
-        //Scanner dataScanner = new Scanner(dataFileName);
+        java.util.Scanner input = new java.util.Scanner(System.in);
+        System.out.print("enter a program file:");
+        String fileName = input.nextLine();
+        Scanner programScanner = new Scanner(fileName);
+        java.util.Scanner input2 = new java.util.Scanner(System.in);
+        System.out.print("enter a data file:");
+        String dataFileName = input2.nextLine();
+        Scanner dataScanner = new Scanner(dataFileName);
         // !!!! for test
 
-        Scanner programScanner = new Scanner(args[0]);
-        Scanner dataScanner = new Scanner(args[1]);
+        //Scanner programScanner = new Scanner(args[0]);
+        //Scanner dataScanner = new Scanner(args[1]);
         Queue<Object> tokenQueue = new LinkedList<>();
         Queue<Integer> inputDataQueue = new LinkedList<>();
 
@@ -54,12 +52,15 @@ class Main {
         //System.out.println(tokenQueue);
 
         //System.out.println("===================Parser===================");
+        Map<String, Function> functionMap = new HashMap<>();
+
         Procedure procedure = new Procedure();
-        procedure.parse(tokenQueue);
+        procedure.parse(tokenQueue, functionMap);
 
         //System.out.println("===================Semantic Check===================");
         Stack<Variable> variableStack = new Stack<>();
-        procedure.semanticChecking(variableStack);
+        Map<String, Function> functionCheckingMap = new HashMap<>();
+        procedure.semanticChecking(variableStack, functionCheckingMap);
 
         //System.out.println("===================Print Parser Tree===================");
         //procedure.print();
@@ -67,6 +68,6 @@ class Main {
         //System.out.println("===================Execute the Program===================");
         Memory memory = Memory.getInstance();
         memory.setInputDataQueue(inputDataQueue);
-        procedure.execute(memory);
+        procedure.execute(memory, functionMap);
     }
 }

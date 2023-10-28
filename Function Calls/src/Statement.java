@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -9,12 +10,14 @@ import java.util.Stack;
  * <stmt> ==> <out>
  * <stmt> ==> <in>
  * <stmt> ==> <decl>
+ * <stmt> ==> <call>
  * <p>
  * If the first word of tokenQueue is the keyword "if", then it is an "<if>" statement.
  * If the first word of tokenQueue is the keyword "while", then it is a "<loop>" statement.
  * If the first word of tokenQueue is the keyword "out", then it is an "<out>" statement.
  * If the first word of tokenQueue is the keyword "in", then it is an "<in>" statement.
  * If the first word of tokenQueue is the keyword "integer" or "array", then it is an "<decl>" statement.
+ * If the first word of tokenQueue is the keyword "begin", then it is an "<call>" statement.
  * Otherwise, it is a "<assign>" statement.
  *
  * @author Zhao Liu
@@ -26,38 +29,42 @@ public class Statement {
     private Out out;
     private In in;
     private Declaration declaration;
+    private Call call;
 
     /**
      * The grammar is: <stmt> ==> <assign> | <if> | <loop> | <out> | <in> | <decl>
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         Object firstWord = tokenQueue.peek();
 
         if (firstWord == Core.IF) {
             ifStmt = new If();
-            ifStmt.parse(tokenQueue);
+            ifStmt.parse(tokenQueue, functionMap);
 
         } else if (firstWord == Core.WHILE) {
             loop = new Loop();
-            loop.parse(tokenQueue);
+            loop.parse(tokenQueue, functionMap);
 
         } else if (firstWord == Core.OUT) {
             out = new Out();
-            out.parse(tokenQueue);
+            out.parse(tokenQueue, functionMap);
 
         } else if (firstWord == Core.IN) {
             in = new In();
-            in.parse(tokenQueue);
+            in.parse(tokenQueue, functionMap);
 
         } else if (firstWord == Core.INTEGER || firstWord == Core.ARRAY) {
             declaration = new Declaration();
-            declaration.parse(tokenQueue);
+            declaration.parse(tokenQueue, functionMap);
 
+        } else if (firstWord == Core.BEGIN) {
+            call = new Call();
+            call.parse(tokenQueue, functionMap);
         } else {
             assign = new Assign();
-            assign.parse(tokenQueue);
+            assign.parse(tokenQueue, functionMap);
         }
     }
 
@@ -70,24 +77,26 @@ public class Statement {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         if (assign != null) {
-            assign.semanticChecking(variableStack);
+            assign.semanticChecking(variableStack, functionCheckingMap);
 
         } else if (ifStmt != null) {
-            ifStmt.semanticChecking(variableStack);
+            ifStmt.semanticChecking(variableStack, functionCheckingMap);
 
         } else if (loop != null) {
-            loop.semanticChecking(variableStack);
+            loop.semanticChecking(variableStack, functionCheckingMap);
 
         } else if (out != null) {
-            out.semanticChecking(variableStack);
+            out.semanticChecking(variableStack, functionCheckingMap);
 
         } else if (in != null) {
-            in.semanticChecking(variableStack);
+            in.semanticChecking(variableStack, functionCheckingMap);
 
+        } else if (call != null) {
+            call.semanticChecking(variableStack, functionCheckingMap);
         } else {
-            declaration.semanticChecking(variableStack);
+            declaration.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -97,24 +106,26 @@ public class Statement {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         if (assign != null) {
-            assign.execute(memory);
+            assign.execute(memory, functionMap);
 
         } else if (ifStmt != null) {
-            ifStmt.execute(memory);
+            ifStmt.execute(memory, functionMap);
 
         } else if (loop != null) {
-            loop.execute(memory);
+            loop.execute(memory, functionMap);
 
         } else if (out != null) {
-            out.execute(memory);
+            out.execute(memory, functionMap);
 
         } else if (in != null) {
-            in.execute(memory);
+            in.execute(memory, functionMap);
 
+        } else if (call != null) {
+            call.execute(memory, functionMap);
         } else {
-            declaration.execute(memory);
+            declaration.execute(memory, functionMap);
         }
     }
 
@@ -140,6 +151,8 @@ public class Statement {
         } else if (in != null) {
             in.print(indent);
 
+        } else if (call != null) {
+            call.print(indent);
         } else {
             declaration.print(indent);
         }

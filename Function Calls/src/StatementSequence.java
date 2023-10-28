@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -22,14 +23,14 @@ public class StatementSequence {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         statement = new Statement();
-        statement.parse(tokenQueue);
+        statement.parse(tokenQueue, functionMap);
 
         // If next token is keyword "end" or "else", it should not create any StatementSequence
         if (tokenQueue.peek() != Core.END && tokenQueue.peek() != Core.ELSE) {
             statementSequence = new StatementSequence();
-            statementSequence.parse(tokenQueue);
+            statementSequence.parse(tokenQueue, functionMap);
         }
 
     }
@@ -43,11 +44,11 @@ public class StatementSequence {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
-        statement.semanticChecking(variableStack);
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
+        statement.semanticChecking(variableStack, functionCheckingMap);
 
         if (statementSequence != null) {
-            statementSequence.semanticChecking(variableStack);
+            statementSequence.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -57,10 +58,10 @@ public class StatementSequence {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
-        statement.execute(memory);
+    public void execute(Memory memory, Map<String, Function> functionMap) {
+        statement.execute(memory, functionMap);
         if (statementSequence != null) {
-            statementSequence.execute(memory);
+            statementSequence.execute(memory, functionMap);
         }
     }
 

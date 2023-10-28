@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -21,7 +22,7 @@ public class In {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionCheckingMap) {
         if (tokenQueue.poll() != Core.IN) {
             System.out.println("ERROR: missing keyword 'in'!!!");
             System.exit(1);
@@ -59,7 +60,7 @@ public class In {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         boolean isLHSVariableExist = false;
         for (Variable temp : variableStack) {
             if (temp.getName().equals(variable)) {
@@ -79,7 +80,7 @@ public class In {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         Queue<Integer> inputDataQueue = memory.getInputDataQueue();
         Integer value = inputDataQueue.poll();
 

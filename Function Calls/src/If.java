@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -25,7 +26,7 @@ public class If {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.poll() != Core.IF) {
             System.out.println("ERROR: missing keyword 'if' for if statement!!!");
             System.exit(1);
@@ -33,7 +34,7 @@ public class If {
         ifKeyword = Core.IF;
 
         condition = new Condition();
-        condition.parse(tokenQueue);
+        condition.parse(tokenQueue, functionMap);
 
         if (tokenQueue.poll() != Core.THEN) {
             System.out.println("ERROR: missing keyword 'then' for if statement!!!");
@@ -42,14 +43,14 @@ public class If {
         thenKeyword = Core.THEN;
 
         statementSequence = new StatementSequence();
-        statementSequence.parse(tokenQueue);
+        statementSequence.parse(tokenQueue, functionMap);
 
         if (tokenQueue.peek() == Core.ELSE) {
             tokenQueue.poll();
             elseKeyword = Core.ELSE;
 
             elseStatementSequence = new StatementSequence();
-            elseStatementSequence.parse(tokenQueue);
+            elseStatementSequence.parse(tokenQueue, functionMap);
 
             if (tokenQueue.poll() != Core.END) {
                 System.out.println("ERROR: missing keyword 'end' for if statement!!!");
@@ -76,11 +77,11 @@ public class If {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         int initialSize = variableStack.size();
 
-        condition.semanticChecking(variableStack);
-        statementSequence.semanticChecking(variableStack);
+        condition.semanticChecking(variableStack, functionCheckingMap);
+        statementSequence.semanticChecking(variableStack, functionCheckingMap);
 
         // clean all variables in "if" statement from Stack.
         while (variableStack.size() > initialSize) {
@@ -88,7 +89,7 @@ public class If {
         }
 
         if (elseKeyword != null) {
-            elseStatementSequence.semanticChecking(variableStack);
+            elseStatementSequence.semanticChecking(variableStack, functionCheckingMap);
         }
 
         // clean all variables in "if" statement from Stack.
@@ -108,15 +109,15 @@ public class If {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         int initialSize = memory.localSize();
 
-        boolean conditionValue = condition.execute(memory);
+        boolean conditionValue = condition.execute(memory, functionMap);
         if (elseKeyword == null) {
             // Handle case for "<if> ::= if <cond> then <stmt-seq> end"
             // If the result of "condition" is true, run "<stmt-seq>"
             if (conditionValue) {
-                statementSequence.execute(memory);
+                statementSequence.execute(memory, functionMap);
             }
 
         } else {
@@ -124,9 +125,9 @@ public class If {
             // If the result of "condition" is true, run "<stmt-seq>"
             // otherwise, run "else-<stmt-seq>"
             if (conditionValue) {
-                statementSequence.execute(memory);
+                statementSequence.execute(memory, functionMap);
             } else {
-                elseStatementSequence.execute(memory);
+                elseStatementSequence.execute(memory, functionMap);
             }
         }
 

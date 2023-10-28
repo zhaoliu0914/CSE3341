@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -30,7 +31,7 @@ public class Factor {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.peek() == Core.ID) {
             // If the first token is "ID", then it will match "id" or "id [ <expr> ]".
             tokenQueue.poll();
@@ -42,7 +43,7 @@ public class Factor {
                 leftBracket = Core.LBRACE;
 
                 expression = new Expression();
-                expression.parse(tokenQueue);
+                expression.parse(tokenQueue, functionMap);
 
                 if (tokenQueue.poll() != Core.RBRACE) {
                     System.out.println("ERROR: missing symbol ']'!!!");
@@ -62,7 +63,7 @@ public class Factor {
             leftParenthesis = Core.LPAREN;
 
             expression = new Expression();
-            expression.parse(tokenQueue);
+            expression.parse(tokenQueue, functionMap);
 
             if (tokenQueue.poll() != Core.RPAREN) {
                 System.out.println("ERROR: missing symbol ')'!!!");
@@ -87,7 +88,7 @@ public class Factor {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         if (constant != null || leftParenthesis != null) {
             return;
         }
@@ -112,7 +113,7 @@ public class Factor {
         }
 
         if (expression != null) {
-            expression.semanticChecking(variableStack);
+            expression.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -129,7 +130,7 @@ public class Factor {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      * @return the result of "<factor>"
      */
-    public int execute(Memory memory) {
+    public int execute(Memory memory, Map<String, Function> functionMap) {
         int result = 0;
         if (constant != null) {
             // Handle case for "<factor> ::= const"
@@ -137,11 +138,11 @@ public class Factor {
 
         } else if (leftParenthesis != null) {
             // Handle case for "<factor> ::= ( <expr> )"
-            result = expression.execute(memory);
+            result = expression.execute(memory, functionMap);
 
         } else if (leftBracket != null) {
             // Handle case for "<factor> ::= id [ <expr> ]"
-            int index = expression.execute(memory);
+            int index = expression.execute(memory, functionMap);
             result = memory.findArrayByIndex(variable, index);
 
         } else {
@@ -163,7 +164,7 @@ public class Factor {
             if (leftBracket != null) {
                 System.out.print("[");
                 expression.print(0);
-                System.out.println("]");
+                System.out.print("]");
             }
 
         } else if (constant != null) {

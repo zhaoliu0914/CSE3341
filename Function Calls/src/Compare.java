@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -22,9 +23,9 @@ public class Compare {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         leftExpression = new Expression();
-        leftExpression.parse(tokenQueue);
+        leftExpression.parse(tokenQueue, functionMap);
 
         if (tokenQueue.peek() == Core.EQUAL) {
             tokenQueue.poll();
@@ -38,7 +39,7 @@ public class Compare {
         }
 
         rightExpression = new Expression();
-        rightExpression.parse(tokenQueue);
+        rightExpression.parse(tokenQueue, functionMap);
     }
 
     /**
@@ -50,9 +51,9 @@ public class Compare {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
-        leftExpression.semanticChecking(variableStack);
-        rightExpression.semanticChecking(variableStack);
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
+        leftExpression.semanticChecking(variableStack, functionCheckingMap);
+        rightExpression.semanticChecking(variableStack, functionCheckingMap);
     }
 
     /**
@@ -69,10 +70,10 @@ public class Compare {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      * @return true or false, the result of compare two expression
      */
-    public boolean execute(Memory memory) {
+    public boolean execute(Memory memory, Map<String, Function> functionMap) {
         boolean result = false;
-        int leftValue = leftExpression.execute(memory);
-        int rightValue = rightExpression.execute(memory);
+        int leftValue = leftExpression.execute(memory, functionMap);
+        int rightValue = rightExpression.execute(memory, functionMap);
 
         if (equal != null) {
             // Handle case for ""<cmpr> ::= <expr> = <expr>""

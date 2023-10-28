@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -21,7 +22,7 @@ public class Loop {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.poll() != Core.WHILE) {
             System.out.println("ERROR: missing keyword 'while' for while statement!!!");
             System.exit(1);
@@ -29,7 +30,7 @@ public class Loop {
         whileKeyword = Core.WHILE;
 
         condition = new Condition();
-        condition.parse(tokenQueue);
+        condition.parse(tokenQueue, functionMap);
 
         if (tokenQueue.poll() != Core.DO) {
             System.out.println("ERROR: missing keyword 'do' for while statement!!!");
@@ -38,7 +39,7 @@ public class Loop {
         doKeyword = Core.DO;
 
         statementSequence = new StatementSequence();
-        statementSequence.parse(tokenQueue);
+        statementSequence.parse(tokenQueue, functionMap);
 
         if (tokenQueue.poll() != Core.END) {
             System.out.println("ERROR: missing keyword 'end' for while statement!!!");
@@ -56,11 +57,11 @@ public class Loop {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         int initialSize = variableStack.size();
 
-        condition.semanticChecking(variableStack);
-        statementSequence.semanticChecking(variableStack);
+        condition.semanticChecking(variableStack, functionCheckingMap);
+        statementSequence.semanticChecking(variableStack, functionCheckingMap);
 
         // clean all variables in "while" statement from Stack.
         while (variableStack.size() > initialSize) {
@@ -76,19 +77,19 @@ public class Loop {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         int initialSize = memory.localSize();
 
-        boolean conditionValue = condition.execute(memory);
+        boolean conditionValue = condition.execute(memory, functionMap);
         // repeat run "<stmt-seq>", if the result of "<cond>" is true.
         while (conditionValue) {
-            statementSequence.execute(memory);
+            statementSequence.execute(memory, functionMap);
 
             while (memory.localSize() > initialSize) {
                 memory.popLocalElement();
             }
 
-            conditionValue = condition.execute(memory);
+            conditionValue = condition.execute(memory, functionMap);
         }
 
         while (memory.localSize() > initialSize) {

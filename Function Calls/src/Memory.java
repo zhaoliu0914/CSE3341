@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -39,16 +40,28 @@ public class Memory {
     public static synchronized Memory getInstance() {
         if (instance == null) {
             instance = new Memory();
+            Stack<Map<String, Value>> mainFrameVariablesStack = new Stack<>();
+            instance.localVariablesStack.push(mainFrameVariablesStack);
         }
         return instance;
     }
 
-    private HashMap<String, Value> global = new HashMap<>();
-    private Stack<HashMap<String, Value>> local = new Stack<>();
+    private Map<String, Value> global = new HashMap<>();
+    private Stack<Stack<Map<String, Value>>> localVariablesStack = new Stack<>();
     private Queue<Integer> inputDataQueue;
 
     // Use this flag to keep track of when we finish the DeclSeq
     private boolean declSeqFinished = false;
+    private boolean executingFunction = false;
+
+    public void pushNewVariableStack() {
+        Stack<Map<String, Value>> newVariablesStack = new Stack<>();
+        localVariablesStack.push(newVariablesStack);
+    }
+
+    public void popVariableStack() {
+        localVariablesStack.pop();
+    }
 
     /**
      * @param variable
@@ -67,11 +80,13 @@ public class Memory {
             valueHeap.intValue = 0;
         }
 
-        if (declSeqFinished) {
-            HashMap<String, Value> item = new HashMap<>();
+        if (declSeqFinished || executingFunction) {
+            Map<String, Value> item = new HashMap<>();
             item.put(variable, valueHeap);
 
-            local.push(item);
+            Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+
+            localVariables.push(item);
         } else {
             global.put(variable, valueHeap);
         }
@@ -91,7 +106,9 @@ public class Memory {
         }
 
         boolean isInitialized = false;
-        for (HashMap<String, Value> temp : local) {
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+
+        for (Map<String, Value> temp : localVariables) {
             Value tempValue = temp.get(variable);
             if (tempValue != null) {
                 tempValue.arrayValue = new int[size];
@@ -119,7 +136,9 @@ public class Memory {
         }
 
         boolean isUpdated = false;
-        for (HashMap<String, Value> temp : local) {
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+
+        for (Map<String, Value> temp : localVariables) {
             Value tempValue = temp.get(variable);
             if (tempValue != null) {
                 updateHeapValue(tempValue, 0, value);
@@ -148,7 +167,9 @@ public class Memory {
         }
 
         boolean isUpdated = false;
-        for (HashMap<String, Value> temp : local) {
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+
+        for (Map<String, Value> temp : localVariables) {
             Value tempValue = temp.get(variable);
             if (tempValue != null) {
                 updateHeapValue(tempValue, index, value);
@@ -201,9 +222,10 @@ public class Memory {
             System.exit(1);
         }
 
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
         Value value = null;
         int result;
-        for (HashMap<String, Value> temp : local) {
+        for (Map<String, Value> temp : localVariables) {
             Value tempValue = temp.get(variable);
             if (tempValue != null) {
                 value = tempValue;
@@ -241,9 +263,10 @@ public class Memory {
             System.exit(1);
         }
 
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
         Value value = null;
         int result;
-        for (HashMap<String, Value> temp : local) {
+        for (Map<String, Value> temp : localVariables) {
             Value tempValue = temp.get(variable);
             if (tempValue != null) {
                 value = tempValue;
@@ -278,15 +301,32 @@ public class Memory {
      */
     public void copyBySharing(String lhsVariable, String rhsVariable) {
         boolean isLhsExist = isExist(lhsVariable);
-        boolean isRhsExist = isExist(rhsVariable);
-        if (!isLhsExist || !isRhsExist) {
-            System.out.println("ERROR: Variables " + lhsVariable + " or " + rhsVariable + " has not been declared!!!");
+        if (!isLhsExist) {
+            System.out.println("ERROR: Variables " + lhsVariable + " has not been declared!!!");
             System.exit(1);
         }
 
         boolean isCopied = false;
         Value rhsValue = null;
-        for (HashMap<String, Value> temp : local) {
+        Stack<Map<String, Value>> rightHandSideVariables;
+        Stack<Map<String, Value>> localVariables = localVariablesStack.pop();
+
+        // If current Call Stack is located at main frame, we only have 1 variable stack.
+        // So right hand-side value can only come from this stack.
+        if (localVariablesStack.size() == 0) {
+            rightHandSideVariables = localVariables;
+        } else {
+            // If current Call Stack has multi frames/stacks, so we need to use the second stack to find right hand-side value.
+            rightHandSideVariables = localVariablesStack.peek();
+        }
+
+        boolean isRhsExist = isExistByStack(rightHandSideVariables, rhsVariable);
+        if (!isRhsExist) {
+            System.out.println("ERROR: Variables " + rhsVariable + " has not been declared!!!");
+            System.exit(1);
+        }
+
+        for (Map<String, Value> temp : rightHandSideVariables) {
             Value tempValue = temp.get(rhsVariable);
             if (tempValue != null) {
                 rhsValue = tempValue;
@@ -297,7 +337,10 @@ public class Memory {
             rhsValue = global.get(rhsVariable);
         }
 
-        for (HashMap<String, Value> temp : local) {
+        // Push the variable stack back to localVariablesStack
+        localVariablesStack.push(localVariables);
+
+        for (Map<String, Value> temp : localVariables) {
             boolean isContain = temp.containsKey(lhsVariable);
             if (isContain) {
                 temp.replace(lhsVariable, rhsValue);
@@ -318,7 +361,25 @@ public class Memory {
      */
     private boolean isExist(String variable) {
         boolean isFound = false;
-        for (HashMap<String, Value> temp : local) {
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+
+        for (Map<String, Value> temp : localVariables) {
+            if (temp.containsKey(variable)) {
+                isFound = true;
+                break;
+            }
+        }
+        if (!isFound) {
+            isFound = global.containsKey(variable);
+        }
+
+        return isFound;
+    }
+
+    private boolean isExistByStack(Stack<Map<String, Value>> variableStack, String variable) {
+        boolean isFound = false;
+
+        for (Map<String, Value> temp : variableStack) {
             if (temp.containsKey(variable)) {
                 isFound = true;
                 break;
@@ -332,7 +393,8 @@ public class Memory {
     }
 
     public int localSize() {
-        return local.size();
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+        return localVariables.size();
     }
 
     public int globalSize() {
@@ -340,7 +402,8 @@ public class Memory {
     }
 
     public void popLocalElement() {
-        local.pop();
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+        localVariables.pop();
     }
 
     public boolean isDeclSeqFinished() {
@@ -349,6 +412,14 @@ public class Memory {
 
     public void setDeclSeqFinished(boolean declSeqFinished) {
         this.declSeqFinished = declSeqFinished;
+    }
+
+    public boolean isExecutingFunction() {
+        return executingFunction;
+    }
+
+    public void setExecutingFunction(boolean executingFunction) {
+        this.executingFunction = executingFunction;
     }
 
     public Queue<Integer> getInputDataQueue() {

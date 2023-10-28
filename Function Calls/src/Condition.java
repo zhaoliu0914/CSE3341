@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -28,7 +29,7 @@ public class Condition {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.peek() == Core.NOT) {
             // If the first word of token sequence is "not", then it is "<cond> ==> not <cond>"
             // so the second token must be "<cond>"
@@ -36,12 +37,12 @@ public class Condition {
             notKeyword = Core.NOT;
 
             condition = new Condition();
-            condition.parse(tokenQueue);
+            condition.parse(tokenQueue, functionMap);
 
         } else {
             // Otherwise, the first token would be "<cmpr>"
             compare = new Compare();
-            compare.parse(tokenQueue);
+            compare.parse(tokenQueue, functionMap);
 
             if (tokenQueue.peek() == Core.OR) {
                 // If the second token is "or", then it is "<cmpr> or <cond>"
@@ -49,14 +50,14 @@ public class Condition {
                 orKeyword = Core.OR;
 
                 condition = new Condition();
-                condition.parse(tokenQueue);
+                condition.parse(tokenQueue, functionMap);
             } else if (tokenQueue.peek() == Core.AND) {
                 // If the second token is "and", then it is "<cmpr> and <cond>"
                 tokenQueue.poll();
                 andKeyword = Core.AND;
 
                 condition = new Condition();
-                condition.parse(tokenQueue);
+                condition.parse(tokenQueue, functionMap);
             }
         }
     }
@@ -70,12 +71,12 @@ public class Condition {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         if (compare != null) {
-            compare.semanticChecking(variableStack);
+            compare.semanticChecking(variableStack, functionCheckingMap);
         }
         if (condition != null) {
-            condition.semanticChecking(variableStack);
+            condition.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -94,13 +95,13 @@ public class Condition {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      * @return true or false, the result of condition
      */
-    public boolean execute(Memory memory) {
+    public boolean execute(Memory memory, Map<String, Function> functionMap) {
         boolean result = false;
 
         if (notKeyword != null) {
             // Handle case for "<cond> ::= not <cond>"
             // Negate the value of "<cond>"
-            boolean conditionValue = condition.execute(memory);
+            boolean conditionValue = condition.execute(memory, functionMap);
             if (!conditionValue) {
                 result = true;
             }
@@ -108,8 +109,8 @@ public class Condition {
         } else if (orKeyword != null) {
             // Handle case for "<cond> ::= <cmpr> or <cond>"
             // either "<cmpr>" or "<cond>" is true, return true
-            boolean compareValue = compare.execute(memory);
-            boolean conditionValue = condition.execute(memory);
+            boolean compareValue = compare.execute(memory, functionMap);
+            boolean conditionValue = condition.execute(memory, functionMap);
             if (compareValue || conditionValue) {
                 result = true;
             }
@@ -117,8 +118,8 @@ public class Condition {
         } else if (andKeyword != null) {
             // Handle case for "<cond> ::= <cmpr> or <cond>"
             // either "<cmpr>" or "<cond>" is true, return true
-            boolean compareValue = compare.execute(memory);
-            boolean conditionValue = condition.execute(memory);
+            boolean compareValue = compare.execute(memory, functionMap);
+            boolean conditionValue = condition.execute(memory, functionMap);
             if (compareValue && conditionValue) {
                 result = true;
             }
@@ -126,7 +127,7 @@ public class Condition {
         } else {
             // Handle case for "<cond> ::= <cmpr>"
             // return the result of "<cmpr>"
-            result = compare.execute(memory);
+            result = compare.execute(memory, functionMap);
         }
 
         return result;

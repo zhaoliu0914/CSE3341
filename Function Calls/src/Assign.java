@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -51,7 +52,7 @@ public class Assign {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.poll() != Core.ID) {
             System.out.println("ERROR: missing identifier or variable.");
             System.exit(1);
@@ -70,7 +71,7 @@ public class Assign {
             lhsLeftBracket = Core.LBRACE;
 
             lhsExpression = new Expression();
-            lhsExpression.parse(tokenQueue);
+            lhsExpression.parse(tokenQueue, functionMap);
 
             if (tokenQueue.poll() != Core.RBRACE) {
                 System.out.println("ERROR: missing right bracket ']' for the variable in the equation " + lhsVariable);
@@ -85,7 +86,7 @@ public class Assign {
             assign = Core.ASSIGN;
 
             rhsExpression = new Expression();
-            rhsExpression.parse(tokenQueue);
+            rhsExpression.parse(tokenQueue, functionMap);
 
         } else {
             if (tokenQueue.poll() != Core.ASSIGN) {
@@ -115,7 +116,7 @@ public class Assign {
                 rhsLeftBracket = Core.LBRACE;
 
                 rhsExpression = new Expression();
-                rhsExpression.parse(tokenQueue);
+                rhsExpression.parse(tokenQueue, functionMap);
 
                 if (tokenQueue.poll() != Core.RBRACE) {
                     System.out.println("ERROR: missing right bracket ']' for the variable in the equation " + lhsVariable);
@@ -138,7 +139,7 @@ public class Assign {
                 // Case 3: "id := <expr> ;" will be only case.
 
                 rhsExpression = new Expression();
-                rhsExpression.parse(tokenQueue);
+                rhsExpression.parse(tokenQueue, functionMap);
             }
         }
 
@@ -160,7 +161,7 @@ public class Assign {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         boolean isLHSVariableExist = false;
         Variable lhsVariableAttribute = null;
         for (Variable temp : variableStack) {
@@ -197,10 +198,10 @@ public class Assign {
         */
 
         if (lhsExpression != null) {
-            lhsExpression.semanticChecking(variableStack);
+            lhsExpression.semanticChecking(variableStack, functionCheckingMap);
         }
         if (rhsExpression != null) {
-            rhsExpression.semanticChecking(variableStack);
+            rhsExpression.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -210,19 +211,19 @@ public class Assign {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         if (isLHSArray) {
             // Handle case for "id [ <expr> ] := <expr> ;"
             // The result of lhsExpression is the "index" of array.
             // The result of rhsExpression is the "value" of array.
-            int index = lhsExpression.execute(memory);
-            int value = rhsExpression.execute(memory);
+            int index = lhsExpression.execute(memory, functionMap);
+            int value = rhsExpression.execute(memory, functionMap);
             memory.updateArray(lhsVariable, index, value);
 
         } else if (isRHSNewInteger) {
             // Handle case for "id := new integer [ <expr> ];"
             // The result of rhsExpression is the "size" of array
-            int size = rhsExpression.execute(memory);
+            int size = rhsExpression.execute(memory, functionMap);
             memory.initializeArray(lhsVariable, size);
 
         } else if (isRHSNewArray) {
@@ -236,7 +237,7 @@ public class Assign {
             // When an array variable appears on the left-hand side of an "id := <expr>" type assignment without "[<expr>]",
             // we treat it as a shorthand for the index 0.
             // The result of rhsExpression is the "value"
-            int value = rhsExpression.execute(memory);
+            int value = rhsExpression.execute(memory, functionMap);
             memory.update(lhsVariable, value);
 
         }

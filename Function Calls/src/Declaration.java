@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -20,13 +21,13 @@ public class Declaration {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         if (tokenQueue.peek() == Core.INTEGER) {
             declarationInteger = new DeclarationInteger();
-            declarationInteger.parse(tokenQueue);
+            declarationInteger.parse(tokenQueue, functionMap);
         } else {
             declarationArray = new DeclarationArray();
-            declarationArray.parse(tokenQueue);
+            declarationArray.parse(tokenQueue, functionMap);
         }
     }
 
@@ -39,11 +40,11 @@ public class Declaration {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
         if (declarationInteger != null) {
-            declarationInteger.semanticChecking(variableStack);
+            declarationInteger.semanticChecking(variableStack, functionCheckingMap);
         } else {
-            declarationArray.semanticChecking(variableStack);
+            declarationArray.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -53,11 +54,11 @@ public class Declaration {
      *
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
-    public void execute(Memory memory) {
+    public void execute(Memory memory, Map<String, Function> functionMap) {
         if (declarationInteger != null) {
-            declarationInteger.execute(memory);
+            declarationInteger.execute(memory, functionMap);
         } else {
-            declarationArray.execute(memory);
+            declarationArray.execute(memory, functionMap);
         }
     }
 

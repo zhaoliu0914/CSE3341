@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -24,9 +25,9 @@ public class Term {
      *
      * @param tokenQueue a sequence of tokens as input to the parser.
      */
-    public void parse(Queue<Object> tokenQueue) {
+    public void parse(Queue<Object> tokenQueue, Map<String, Function> functionMap) {
         factor = new Factor();
-        factor.parse(tokenQueue);
+        factor.parse(tokenQueue, functionMap);
 
         if (tokenQueue.peek() == Core.MULTIPLY) {
             // If the second token is symbol "*", then it is "<term> ==> <factor> * <term>"
@@ -34,14 +35,14 @@ public class Term {
             multiply = Core.MULTIPLY;
 
             term = new Term();
-            term.parse(tokenQueue);
+            term.parse(tokenQueue, functionMap);
         } else if (tokenQueue.peek() == Core.DIVIDE) {
             // If the second token is symbol "/", then it is "<term> ==> <factor> / <term>"
             tokenQueue.poll();
             divide = Core.DIVIDE;
 
             term = new Term();
-            term.parse(tokenQueue);
+            term.parse(tokenQueue, functionMap);
         }
 
     }
@@ -55,11 +56,11 @@ public class Term {
      *
      * @param variableStack contains all declared variables
      */
-    public void semanticChecking(Stack<Variable> variableStack) {
-        factor.semanticChecking(variableStack);
+    public void semanticChecking(Stack<Variable> variableStack, Map<String, Function> functionCheckingMap) {
+        factor.semanticChecking(variableStack, functionCheckingMap);
 
         if (term != null) {
-            term.semanticChecking(variableStack);
+            term.semanticChecking(variableStack, functionCheckingMap);
         }
     }
 
@@ -78,18 +79,18 @@ public class Term {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      * @return the result of "<term>"
      */
-    public int execute(Memory memory) {
+    public int execute(Memory memory, Map<String, Function> functionMap) {
         int result = 0;
 
-        int factorValue = factor.execute(memory);
+        int factorValue = factor.execute(memory, functionMap);
         if (multiply != null) {
             // Handle case for "<term> ::= <factor> * <term>"
-            int termValue = term.execute(memory);
+            int termValue = term.execute(memory, functionMap);
             result = factorValue * termValue;
 
         } else if (divide != null) {
             // Handle case for "<term> ::= <factor> / <term>"
-            int termValue = term.execute(memory);
+            int termValue = term.execute(memory, functionMap);
             if (termValue == 0) {
                 System.out.println("ERROR: can not divided by 0!!!");
                 System.exit(1);
