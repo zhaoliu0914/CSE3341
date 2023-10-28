@@ -4,18 +4,18 @@ class Main {
     public static void main(String[] args) {
         // Initialize the scanner with the input file
         // !!!! for test
-        java.util.Scanner input = new java.util.Scanner(System.in);
-        System.out.print("enter a program file:");
-        String fileName = input.nextLine();
-        Scanner programScanner = new Scanner(fileName);
-        java.util.Scanner input2 = new java.util.Scanner(System.in);
-        System.out.print("enter a data file:");
-        String dataFileName = input2.nextLine();
-        Scanner dataScanner = new Scanner(dataFileName);
+        //java.util.Scanner input = new java.util.Scanner(System.in);
+        //System.out.print("enter a program file:");
+        //String fileName = input.nextLine();
+        //Scanner programScanner = new Scanner(fileName);
+        //java.util.Scanner input2 = new java.util.Scanner(System.in);
+        //System.out.print("enter a data file:");
+        //String dataFileName = input2.nextLine();
+        //Scanner dataScanner = new Scanner(dataFileName);
         // !!!! for test
 
-        //Scanner programScanner = new Scanner(args[0]);
-        //Scanner dataScanner = new Scanner(args[1]);
+        Scanner programScanner = new Scanner(args[0]);
+        Scanner dataScanner = new Scanner(args[1]);
         Queue<Object> tokenQueue = new LinkedList<>();
         Queue<Integer> inputDataQueue = new LinkedList<>();
 

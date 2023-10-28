@@ -59,6 +59,15 @@ Term.java
 Factor.java
         Represent non-terminal "<factor>" in Context-Free Grammar
 
+Function.java
+        Represent non-terminal "<function>" in Context-Free Grammar
+
+Parameter.java
+        Represent non-terminal "<parameters>" in Context-Free Grammar
+
+Call.java
+        Represent non-terminal "<call>" in Context-Free Grammar
+
 Variable.java
         Store variable's name, type, and value for performing Semantic Checking
 
@@ -93,6 +102,10 @@ Interpreter: Memory.java is the main class for simulating memory for all variabl
             The global scope is visible for all variables.
             The inner class "Value" is a frame/object represents Heap for all values.
             The execute process is similar with Semantic Check. The only difference is Memory.java is responsible for store variables and values, and find them.
+
+Function Call: Using call-by-sharing for parameter passing, which means the formal parameter share the same object with argument.
+            The "Function" class will work for allocating formal parameter in memory, and execute statements inside of function.
+            The "Call" class is mainly working for push and pop a variable stack into Call Stack.
 
 Testing: I will test most simple input source code first. If there is not any error, I would test some complex one.
             When I occur some problems or errors, I would add more print statement to look at what the value of current object.
