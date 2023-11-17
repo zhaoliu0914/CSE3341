@@ -1,0 +1,16 @@
+procedure t6 is
+	procedure add(a, b) is
+		array n;
+		a[0] := a[0]+b[0];
+		b := array n;
+	end
+	array x;
+	array y;
+begin
+	x := new integer[1];
+	x[0] := 1;
+	y := new integer[1];
+	y := 1+x;
+	begin add(x, y);
+	out(x);
+end

@@ -1,0 +1,19 @@
+procedure t5 is
+	procedure A(x) is
+		array y;
+		y := new integer[1]; 
+		y[0] := 8; 
+		out(x); 
+		x := array y; 
+	end
+	integer m;
+	integer n;
+	array z;
+begin
+	m := 10;
+	n := 5;
+	z := new integer[1];
+	z[0] := m+n;
+	begin A(z);
+	out(m);
+end

@@ -1,0 +1,7 @@
+procedure t0 is
+	integer x;
+	array y;
+begin
+	x := 10;
+	out(x);
+end

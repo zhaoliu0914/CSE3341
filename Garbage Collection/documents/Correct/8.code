@@ -1,0 +1,17 @@
+procedure t8 is
+	procedure A(r) is
+		array n;
+		if r < 1 then
+			out(r);
+		else
+			n := new integer[1];
+			n[0] := r-1;
+			begin A(n);
+		end
+	end
+	array r;
+begin
+	r := new integer[1];
+	r[0] := 5;
+	begin A(r);
+end

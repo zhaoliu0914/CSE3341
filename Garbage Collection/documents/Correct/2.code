@@ -1,0 +1,7 @@
+procedure t2 is
+	array y;
+begin
+	y := new integer[1];
+	y[0] := 10;
+	out(y);
+end

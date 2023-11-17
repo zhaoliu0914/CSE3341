@@ -1,0 +1,10 @@
+procedure t3 is
+	integer x;
+	array y;
+	array z;
+begin
+	y := new integer[1];
+	y[0] := 10;
+	z := array y;
+	out(z[0]);
+end

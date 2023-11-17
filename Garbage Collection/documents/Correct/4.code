@@ -1,0 +1,15 @@
+procedure t4 is
+	procedure A(x) is
+		integer y;
+		out(x);
+	end
+	integer a;
+	integer b;
+	array z;
+begin
+	a := 5;
+	b := 10;
+	z := new integer[1];
+	z[0] := a+b;
+	begin A(z);
+end

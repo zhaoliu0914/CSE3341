@@ -1,0 +1,15 @@
+procedure t7 is
+	integer x;
+	integer y;
+	array a;
+	array b;
+begin
+	x := 10;
+	y := 1;
+	while y < x do
+		a := array b;
+		a := new integer[1];
+		a[0] := 100;
+		y := y+1;
+	end
+end
