@@ -118,6 +118,9 @@ public class Procedure {
         }
 
         statementSequence.execute(memory, functionMap);
+
+        // Garbage collection all the Variables and Objects including Local and Global
+        memory.emptyMemory();
     }
 
     /**

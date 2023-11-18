@@ -1,7 +1,4 @@
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Simulating memory (Stack and Heap) for our variables.
@@ -21,6 +18,7 @@ public class Memory {
         public Core type;
         public int intValue;
         public int[] arrayValue;
+        public int referenceCount;
     }
 
     // This is the only one Instantiation of this class.
@@ -49,10 +47,12 @@ public class Memory {
     private Map<String, Value> global = new HashMap<>();
     private Stack<Stack<Map<String, Value>>> localVariablesStack = new Stack<>();
     private Queue<Integer> inputDataQueue;
+    private int totalObjects = 0;
 
     // Use this flag to keep track of when we finish the DeclSeq
     private boolean declSeqFinished = false;
     private boolean executingFunction = false;
+    private boolean initializeFormalParams = false;
 
     public void pushNewVariableStack() {
         Stack<Map<String, Value>> newVariablesStack = new Stack<>();
@@ -60,6 +60,24 @@ public class Memory {
     }
 
     public void popVariableStack() {
+        // Garbage collection all the Variables and Objects from the top Stack/Frame
+        Stack<Map<String, Value>> topStack = localVariablesStack.peek();
+        for (Map<String, Value> localVariableMap : topStack) {
+            for (Map.Entry<String, Value> entry : localVariableMap.entrySet()) {
+                Value tempValue = entry.getValue();
+
+                // for Garbage Collection.
+                if (tempValue != null && tempValue.type == Core.ARRAY) {
+                    tempValue.referenceCount--;
+                    if (tempValue.referenceCount == 0) {
+                        totalObjects--;
+                        System.out.println("gc:" + totalObjects);
+                    }
+                }
+            }
+        }
+
+        // pop the top Stack/Frame
         localVariablesStack.pop();
     }
 
@@ -68,15 +86,21 @@ public class Memory {
      * @param type     only 2 options, integer or array
      */
     public void allocate(Core type, String variable) {
-        boolean isExist = isExist(variable);
+        boolean isExist = false;
+        if (executingFunction) {
+            isExist = isExistLocal(variable);
+        } else {
+            isExist = isExistGlobalAndLocal(variable);
+        }
         if (isExist) {
             System.out.println("ERROR: Variable " + variable + " has been doubly-declared!!!");
             System.exit(1);
         }
 
-        Value valueHeap = new Value();
-        valueHeap.type = type;
+        Value valueHeap = null;
         if (type == Core.INTEGER) {
+            valueHeap = new Value();
+            valueHeap.type = Core.INTEGER;
             valueHeap.intValue = 0;
         }
 
@@ -99,7 +123,7 @@ public class Memory {
      * @param size     array size
      */
     public void initializeArray(String variable, int size) {
-        boolean isExist = isExist(variable);
+        boolean isExist = isExistGlobalAndLocal(variable);
         if (!isExist) {
             System.out.println("ERROR: Variable " + variable + " has not been declared!!!");
             System.exit(1);
@@ -109,16 +133,57 @@ public class Memory {
         Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
 
         for (Map<String, Value> temp : localVariables) {
-            Value tempValue = temp.get(variable);
-            if (tempValue != null) {
-                tempValue.arrayValue = new int[size];
+            boolean isContain = temp.containsKey(variable);
+            if (isContain) {
+                // for Garbage Collection.
+                Value tempValue = temp.get(variable);
+                if (tempValue != null) {
+                    tempValue.referenceCount--;
+                    if (tempValue.referenceCount == 0) {
+                        totalObjects--;
+                        System.out.println("gc:" + totalObjects);
+                    }
+                }
+
+                Value newValue = new Value();
+                newValue.type = Core.ARRAY;
+                // for Garbage Collection
+                newValue.referenceCount = 1;
+                newValue.arrayValue = new int[size];
+                totalObjects++;
+
+                temp.replace(variable, newValue);
+
+                // for Garbage Collection
+                System.out.println("gc:" + totalObjects);
+
                 isInitialized = true;
                 break;
             }
         }
         if (!isInitialized) {
             Value tempValue = global.get(variable);
-            tempValue.arrayValue = new int[size];
+
+            // for Garbage Collection.
+            if (tempValue != null) {
+                tempValue.referenceCount--;
+                if (tempValue.referenceCount == 0) {
+                    totalObjects--;
+                    System.out.println("gc:" + totalObjects);
+                }
+            }
+
+            Value newValue = new Value();
+            newValue.type = Core.ARRAY;
+            // for Garbage Collection
+            newValue.referenceCount = 1;
+            newValue.arrayValue = new int[size];
+            totalObjects++;
+
+            global.replace(variable, newValue);
+
+            // for Garbage Collection
+            System.out.println("gc:" + totalObjects);
         }
     }
 
@@ -129,7 +194,7 @@ public class Memory {
      * @param value    input value
      */
     public void update(String variable, int value) {
-        boolean isExist = isExist(variable);
+        boolean isExist = isExistGlobalAndLocal(variable);
         if (!isExist) {
             System.out.println("ERROR: Variable " + variable + " has not been declared!!!");
             System.exit(1);
@@ -160,7 +225,7 @@ public class Memory {
      * @param value    the value
      */
     public void updateArray(String variable, int index, int value) {
-        boolean isExist = isExist(variable);
+        boolean isExist = isExistGlobalAndLocal(variable);
         if (!isExist) {
             System.out.println("ERROR: Variable " + variable + " has not been declared!!!");
             System.exit(1);
@@ -192,20 +257,25 @@ public class Memory {
      * @param value     the value
      */
     private void updateHeapValue(Value valueHeap, int index, int value) {
-        if (valueHeap.type == Core.INTEGER) {
-            valueHeap.intValue = value;
-        } else {
-            if (valueHeap.arrayValue == null) {
-                System.out.println("ERROR: Array has not been initialized!!!");
-                System.exit(1);
-            }
-            int size = valueHeap.arrayValue.length;
-            if (index >= size) {
-                System.out.println("ERROR: Array has reached out of range!!!");
-                System.exit(1);
-            }
+        if (valueHeap != null) {
+            if (valueHeap.type == Core.INTEGER) {
+                valueHeap.intValue = value;
+            } else {
+                if (valueHeap.arrayValue == null) {
+                    System.out.println("ERROR: Array has not been initialized!!!");
+                    System.exit(1);
+                }
+                int size = valueHeap.arrayValue.length;
+                if (index >= size) {
+                    System.out.println("ERROR: Array has reached out of range!!!");
+                    System.exit(1);
+                }
 
-            valueHeap.arrayValue[index] = value;
+                valueHeap.arrayValue[index] = value;
+            }
+        } else {
+            System.out.println("ERROR: Array has not been initialized!!!");
+            System.exit(1);
         }
     }
 
@@ -216,7 +286,7 @@ public class Memory {
      * @return the value based on variable name
      */
     public int find(String variable) {
-        boolean isExist = isExist(variable);
+        boolean isExist = isExistGlobalAndLocal(variable);
         if (!isExist) {
             System.out.println("ERROR: Variable " + variable + " has not been declared!!!");
             System.exit(1);
@@ -257,7 +327,7 @@ public class Memory {
      * @return the value from array based on variable name and index
      */
     public int findArrayByIndex(String variable, int index) {
-        boolean isExist = isExist(variable);
+        boolean isExist = isExistGlobalAndLocal(variable);
         if (!isExist) {
             System.out.println("ERROR: Variable " + variable + " has not been declared!!!");
             System.exit(1);
@@ -300,7 +370,7 @@ public class Memory {
      * @param rhsVariable right-hand side variable
      */
     public void copyBySharing(String lhsVariable, String rhsVariable) {
-        boolean isLhsExist = isExist(lhsVariable);
+        boolean isLhsExist = isExistGlobalAndLocal(lhsVariable);
         if (!isLhsExist) {
             System.out.println("ERROR: Variables " + lhsVariable + " has not been declared!!!");
             System.exit(1);
@@ -313,14 +383,27 @@ public class Memory {
 
         // If current Call Stack is located at main frame, we only have 1 variable stack.
         // So right hand-side value can only come from this stack.
-        if (localVariablesStack.size() == 0) {
-            rightHandSideVariables = localVariables;
-        } else {
-            // If current Call Stack has multi frames/stacks, so we need to use the second stack to find right hand-side value.
-            rightHandSideVariables = localVariablesStack.peek();
-        }
+        boolean isRhsExist;
+        if (initializeFormalParams) {
+            if (localVariablesStack.size() == 0) {
+                rightHandSideVariables = localVariables;
+            } else {
+                // If current Call Stack has multi frames/stacks, so we need to use the second stack to find right hand-side value.
+                rightHandSideVariables = localVariablesStack.peek();
+            }
+            isRhsExist = isExistByStack(rightHandSideVariables, rhsVariable);
 
-        boolean isRhsExist = isExistByStack(rightHandSideVariables, rhsVariable);
+        } else {
+            rightHandSideVariables = localVariables;
+            isRhsExist = isExistByStack(rightHandSideVariables, rhsVariable);
+
+            if (!isRhsExist) {
+                rightHandSideVariables = localVariablesStack.peek();
+
+                isRhsExist = isExistByStack(rightHandSideVariables, rhsVariable);
+
+            }
+        }
         if (!isRhsExist) {
             System.out.println("ERROR: Variables " + rhsVariable + " has not been declared!!!");
             System.exit(1);
@@ -343,13 +426,63 @@ public class Memory {
         for (Map<String, Value> temp : localVariables) {
             boolean isContain = temp.containsKey(lhsVariable);
             if (isContain) {
+                // for Garbage Collection.
+                Value tempValue = temp.get(lhsVariable);
+                if (tempValue != null) {
+                    tempValue.referenceCount--;
+                    if (tempValue.referenceCount == 0) {
+                        totalObjects--;
+                        System.out.println("gc:" + totalObjects);
+                    }
+                }
+
                 temp.replace(lhsVariable, rhsValue);
+                if (rhsValue != null) {
+                    rhsValue.referenceCount++;
+                }
+
                 isCopied = true;
                 break;
             }
         }
         if (!isCopied) {
+            // for Garbage Collection.
+            Value tempValue = global.get(lhsVariable);
+            if (tempValue != null) {
+                tempValue.referenceCount--;
+                if (tempValue.referenceCount == 0) {
+                    totalObjects--;
+                    System.out.println("gc:" + totalObjects);
+                }
+            }
+
             global.replace(lhsVariable, rhsValue);
+            if (rhsValue != null) {
+                rhsValue.referenceCount++;
+            }
+        }
+    }
+
+    public void emptyMemory() {
+        while (localVariablesStack.size() > 0) {
+            this.popVariableStack();
+        }
+
+        // Garbage collection all the Variables and Objects for the Global
+        for (Map.Entry<String, Value> entry : global.entrySet()) {
+            String variable = entry.getKey();
+            Value tempValue = entry.getValue();
+
+            // for Garbage Collection.
+            if (tempValue != null && tempValue.type == Core.ARRAY) {
+                tempValue.referenceCount--;
+                if (tempValue.referenceCount == 0) {
+                    totalObjects--;
+                    System.out.println("gc:" + totalObjects);
+                }
+            }
+
+            global.replace(variable, null);
         }
     }
 
@@ -359,7 +492,27 @@ public class Memory {
      * @param variable variable name
      * @return true for exist, false for not exist
      */
-    private boolean isExist(String variable) {
+    private boolean isExistLocal(String variable) {
+        boolean isFound = false;
+        Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
+
+        for (Map<String, Value> temp : localVariables) {
+            if (temp.containsKey(variable)) {
+                isFound = true;
+                break;
+            }
+        }
+
+        return isFound;
+    }
+
+    /**
+     * checking whether variable exists in "local" or "global"
+     *
+     * @param variable variable name
+     * @return true for exist, false for not exist
+     */
+    private boolean isExistGlobalAndLocal(String variable) {
         boolean isFound = false;
         Stack<Map<String, Value>> localVariables = localVariablesStack.peek();
 
@@ -416,6 +569,14 @@ public class Memory {
 
     public boolean isExecutingFunction() {
         return executingFunction;
+    }
+
+    public boolean isInitializeFormalParams() {
+        return initializeFormalParams;
+    }
+
+    public void setInitializeFormalParams(boolean initializeFormalParams) {
+        this.initializeFormalParams = initializeFormalParams;
     }
 
     public void setExecutingFunction(boolean executingFunction) {

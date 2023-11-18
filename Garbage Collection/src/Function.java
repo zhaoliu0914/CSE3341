@@ -112,7 +112,9 @@ public class Function {
      * @param memory simulating memory (Stack and Heap) for local and global variables
      */
     public void execute(Memory memory, Queue<String> argumentQueue, Map<String, Function> functionMap) {
+        memory.setInitializeFormalParams(true);
         parameter.execute(memory, argumentQueue, functionMap, false);
+        memory.setInitializeFormalParams(false);
 
         statementSequence.execute(memory,functionMap);
     }

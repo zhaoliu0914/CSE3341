@@ -73,7 +73,12 @@ Variable.java
 
 Memory.java
         Simulate a memory for the program. All variables and values are divided into local scope and global scope
-        Applying Singleton Pattern for this class
+        Applying Singleton Pattern for this class.
+        Implementing Garbage Collection by reference counting.
+        The system will keep track of how many references there are to that object.
+        There is only one reference type (Array type/variable).
+        if array variables are unreachable or go out of scope, the reference counting will be increased and decreased.
+        Once a reference count reaches 0, that object can be garbage collected. For our system, will be printed as "gc:1" or "gc:0"
 
 
 Special features: The program will take an input text file and output a stream of "tokens". The text file contains program codes.
@@ -106,6 +111,12 @@ Interpreter: Memory.java is the main class for simulating memory for all variabl
 Function Call: Using call-by-sharing for parameter passing, which means the formal parameter share the same object with argument.
             The "Function" class will work for allocating formal parameter in memory, and execute statements inside of function.
             The "Call" class is mainly working for push and pop a variable stack into Call Stack.
+
+Garbage Collection: The system will use reference counting to implement GC.
+                    The system will keep track of how many references there are to that object.
+                    There is only one reference type (Array type/variable).
+                    If array variables are unreachable or go out of scope, the reference counting will be increased and decreased.
+                    Once a reference count reaches 0, that object can be garbage collected. For our system, will be printed as "gc:1" or "gc:0"
 
 Testing: I will test most simple input source code first. If there is not any error, I would test some complex one.
             When I occur some problems or errors, I would add more print statement to look at what the value of current object.
